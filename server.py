@@ -3,43 +3,50 @@ from flask import request
 from flask import url_for
 from flask import make_response
 from flask import redirect
+from flask import render_template
+from flask import current_app
+from flask import request
 import urllib
-import facebook
+from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.social import Social
+from flask.ext.security import (Security, LoginForm)
+from flask.ext.social.datastore.sqlalchemy import SQLAlchemyConnectionDatastore
+from flask.ext.security.datastore.sqlalchemy import SQLAlchemyUserDatastore
+from flask.ext.login import login_required
+from flask.ext.social import FacebookLoginHandler
+# import facebook
 
-FACEBOOK_APP_ID = '404415776289287'
-FACEBOOK_APP_SECRET = "98047be5a3ba4477121d79cc07e71882"
 
 app = Flask(__name__)
+app.config['SECURITY_POST_LOGIN'] = '/profile' #REDIRECT
+db = SQLAlchemy(app)
+Security(app, SQLAlchemyUserDatastore(db))
+Social(app, SQLAlchemyConnectionDatastore(db))
+app.config['SOCIAL_FACEBOOK'] = {
+    'oauth': {
+        'consumer_key': '110626275752351',
+        'consumer_secret': 'a6d52ed9f11260e72c70b0c5432266f3',
+        'request_token_params': {
+            'scope': 'email'
+        }
+    }
+}
+app.config['SECRET_KEY'] ="foobarbazblah"
+@app.route('/profile')
+@login_required
+def profile():
+    return render_template('profile.html', content='Profile Page',
+            facebook_conn=current_app.social.facebook.get_connection())
+
 
 @app.route('/login')
-def getUser():
-  user = facebook.get_user_from_cookie(request.cookies, FACEBOOK_APP_ID, FACEBOOK_APP_SECRET)
-  resp = make_response()
-  #resp.headers['Connection'] = 'keep-alive'
-  if user:
-    # Make calls  to db to find info and return
-    # return user_details
-    return user['uid']
-  else:
-    args = dict(client_id=FACEBOOK_APP_ID,
-        redirect_uri=request.url)
-    #url = facebook.auth_url(FACEBOOK_APP_ID, request.url)
-    return redirect(
-        "https://graph.facebook.com/oauth/authorize?" +
-        urllib.urlencode(args))
+def login():
+    return render_template('login.html', content='Login Page',login_form=LoginForm())
 
-    #return url
-    #graph = facebook.GraphAPI(user["access_token"])
-    #friends = graph.get_connections("me", "friends")
-    #profile = graph.get_object("me")
-    #res = []
-    #res.append(profile)
-    #res.append(friends)
-    #resp.data = res 
-    #return resp
-  #else:
-  #  return 
+ # @app.route('/login/facebook')
+# def ():
+#     return repr(request)
 
-#def getUserFromFB():
-if __name__ == '__main__':
+
+if  __name__ == '__main__':
   app.run(debug=True)
