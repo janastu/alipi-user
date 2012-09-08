@@ -19,9 +19,6 @@ from flask.ext.social import FacebookLoginHandler
 
 app = Flask(__name__)
 app.config['SECURITY_POST_LOGIN'] = '/profile' #REDIRECT
-db = SQLAlchemy(app)
-Security(app, SQLAlchemyUserDatastore(db))
-Social(app, SQLAlchemyConnectionDatastore(db))
 app.config['SOCIAL_FACEBOOK'] = {
     'oauth': {
         'consumer_key': '110626275752351',
@@ -31,7 +28,16 @@ app.config['SOCIAL_FACEBOOK'] = {
         }
     }
 }
-app.config['SECRET_KEY'] ="foobarbazblah"
+app.config['SOCIAL_CONNECT_ALLOW_REDIRECT'] = "localhost:5000/profile"
+app.config['SECRET_KEY'] = "foobarbazblah"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.sqlite'
+db = SQLAlchemy(app)
+Security(app, SQLAlchemyUserDatastore(db))
+Social(app, SQLAlchemyConnectionDatastore(db))
+
+@app.before_first_request
+def before_first_request():
+    db.create_all()
 @app.route('/profile')
 @login_required
 def profile():
@@ -43,10 +49,5 @@ def profile():
 def login():
     return render_template('login.html', content='Login Page',login_form=LoginForm())
 
- # @app.route('/login/facebook')
-# def ():
-#     return repr(request)
-
-
 if  __name__ == '__main__':
-  app.run(debug=True)
+  app.run(debug=True, host="0.0.0.0")
