@@ -1,5 +1,8 @@
 *.py[co]
 
+*.bak
+*.sqlite
+logme
 # Packages
 *.egg
 *.egg-info
